@@ -1,0 +1,195 @@
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=0" name="viewport">
+    <meta content="yes" name="apple-mobile-web-app-capable">
+    <meta content="yes" name="apple-touch-fullscreen">
+    <meta content="black" name="apple-mobile-web-app-status-bar-style">
+    <meta content="320" name="MobileOptimized">
+    <title>官方页面</title>
+    <style>
+        .content {
+            height: 100%;
+            width: 100%;
+            position: fixed;
+            left: 0;
+            top: 0;
+            border: none;
+            opacity: 0;
+            transform: scale(0.95);
+            transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+        }
+        .content.loaded {
+            opacity: 1;
+            transform: scale(1);
+        }
+        .error-message {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background-color: #f8f9fa;
+            padding: 0 20px;
+            margin: 0;
+            opacity: 0;
+            animation: fadeIn 0.5s ease-out forwards;
+        }
+        .error-card {
+            width: 100%;
+            max-width: 500px;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+            padding: 40px 30px;
+            text-align: center;
+        }
+        .error-icon {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 24px;
+            background-color: #fff1f0;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .error-icon::after {
+            content: "!";
+            color: #e63946;
+            font-size: 36px;
+            font-weight: bold;
+        }
+        .error-title {
+            font-size: 22px;
+            color: #333;
+            margin-bottom: 16px;
+            font-weight: 600;
+        }
+        .error-desc {
+            font-size: 15px;
+            color: #666;
+            line-height: 1.7;
+            margin-bottom: 28px;
+        }
+        .contact-btn {
+            display: inline-block;
+            padding: 12px 24px;
+            background-color: #e63946;
+            color: #fff;
+            border-radius: 6px;
+            font-size: 15px;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+        .contact-btn:hover {
+            background-color: #d32f2f;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(230, 57, 70, 0.2);
+        }
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        @media (max-width: 420px) {
+            .error-card {
+                padding: 30px 20px;
+            }
+            .error-title {
+                font-size: 20px;
+            }
+            .error-desc {
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <script>
+        const Utils = {
+            getUrlParam: (key) => {
+                const params = new URLSearchParams(window.location.search);
+                return params.get(key) || '';
+            },
+            isValidUrl: (url) => {
+                try {
+                    new URL(url);
+                    return url.startsWith('http');
+                } catch (e) {
+                    return false;
+                }
+            },
+            isDomainAllowed: (url) => {
+                const allowedDomains = ["op.xiaop.icu"];
+                const urlObj = new URL(url);
+                const domain = urlObj.hostname;
+                return allowedDomains.some(allowed => 
+                    domain === allowed || domain.endsWith(`.${allowed}`)
+                );
+            },
+            showError: (message) => {
+                const errorEl = document.createElement('div');
+                errorEl.className = 'error-message';
+                if (message.includes('不在白名单内')) {
+                    errorEl.innerHTML = `
+                        <div class="error-card">
+                            <div class="error-icon"></div>
+                            <h3 class="error-title">域名未授权</h3>
+                            <p class="error-desc">您的域名不在系统白名单内，无法使用此功能。<br>请联系客服进行域名加白操作小xqq2373848783。</p>
+                            <a href="tencent://message/?uin=2373848783&Site=&Menu=yes" class="contact-btn">联系客服加白</a>
+                        </div>
+                    `;
+                } else {
+                    errorEl.textContent = message;
+                }
+                document.body.appendChild(errorEl);
+            }
+        };
+        (() => {
+            try {
+                const encodedParam = Utils.getUrlParam('xx');
+                if (!encodedParam) {
+                    Utils.showError('大哥你链接呢，请检查链接');
+                    return;
+                }
+                let trueurl;
+                try {
+                    trueurl = atob(encodedParam);
+                } catch (e) {
+                    Utils.showError('参数解码失败，无效的参数格式');
+                    return;
+                }
+                if (!Utils.isValidUrl(trueurl)) {
+                    Utils.showError('无效的URL格式，请确保包含http/https协议');
+                    return;
+                }
+                if (!Utils.isDomainAllowed(trueurl)) {
+                    Utils.showError('您的域名不在白名单内无法使用，请联系客服加白');
+                    return;
+                }
+                const iframe = document.createElement('iframe');
+                iframe.className = 'content';
+                iframe.src = trueurl;
+                iframe.title = '加载内容';
+                document.body.appendChild(iframe);
+                // 加载完成后触发过渡动画
+                iframe.onload = () => {
+                    setTimeout(() => {
+                        iframe.classList.add('loaded');
+                    }, 50);
+                };
+            } catch (e) {
+                Utils.showError(`加载失败：${e.message}`);
+                console.error('主逻辑错误：', e);
+            }
+        })();
+    </script>
+</body>
+</html>
+                
